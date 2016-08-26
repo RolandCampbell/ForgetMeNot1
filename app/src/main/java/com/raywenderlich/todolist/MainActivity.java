@@ -23,8 +23,12 @@
 package com.raywenderlich.todolist;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -44,6 +48,7 @@ public class MainActivity extends Activity {
   private ArrayList<String> mList;
   private ArrayAdapter<String> mAdapter;
   private TextView mDateTimeTextView;
+    private BroadcastReceiver mTickReceiver;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +79,39 @@ public class MainActivity extends Activity {
 
       }
     });
+      mTickReceiver = new BroadcastReceiver() {
+          @Override
+          public void onReceive(Context context, Intent intent) {
+              if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
+                  mDateTimeTextView.setText(getCurrentTimeStamp());
+              }
+          }
+      };
   }
+
+    @Override
+    protected void onResume() {
+        // 1
+        super.onResume();
+        // 2
+        mDateTimeTextView.setText(getCurrentTimeStamp());
+        // 3
+        registerReceiver(mTickReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+    }
+
+    @Override
+    protected void onPause() {
+        // 4
+        super.onPause();
+        // 5
+        if (mTickReceiver != null) {
+            try {
+                unregisterReceiver(mTickReceiver);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Timetick Receiver not registered", e);
+            }
+        }
+    }
 
   public void addTaskClicked(View view) {
       Intent intent = new Intent(MainActivity.this, TaskDescriptionActivity.class);
